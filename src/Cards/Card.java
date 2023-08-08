@@ -1,3 +1,5 @@
+package Cards;
+
 public class Card {
     private final String suit;
     private final String value;
@@ -8,6 +10,7 @@ public class Card {
         this.value = value;
         this.color = color;
     }
+
 
     public String getSuit() {
         return suit;
@@ -24,6 +27,10 @@ public class Card {
 
     public boolean matches(Card otherCard) {
         return this.value.equals(otherCard.value) && this.color == otherCard.color;
+    }
+
+    public boolean isJoker() {
+        return getColor() == Color.JOKER;
     }
 
 

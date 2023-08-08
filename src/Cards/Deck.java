@@ -1,6 +1,7 @@
+package Cards;
+
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Random;
 
 public class Deck {
     private final ArrayList<Card> cards;
@@ -35,7 +36,7 @@ public class Deck {
         return cards;
     }
 
-    public ArrayList<Card> dealCard(int cardsPerPlayer) {
+    public synchronized ArrayList<Card> dealCard(int cardsPerPlayer) {
         ArrayList<Card> hand = new ArrayList<>(cards.subList(0, cardsPerPlayer));
         cards.subList(0, cardsPerPlayer).clear();
         return hand;

@@ -1,3 +1,5 @@
+package Cards;
+
 public class CardFactory {
     public static Card createCard(String suit, String value) {
         Color color = switch (suit) {
