@@ -1,9 +1,6 @@
 package Game;
 
 import Cards.Deck;
-
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import Player.PlayerQueue;
 import Player.Player;
 import Util.GameUtil;
@@ -18,25 +15,12 @@ public class MaidGame extends Game {
     }
 
     @Override
-    public void run() {
-        System.out.println("Starting the game...");
-        ExecutorService threadPool = Executors.newFixedThreadPool(playerQueue.size());
-        for (Player player : playerQueue.getQueue()) {
-            player.setGameInstance(this);
-            threadPool.execute(player);
-        }
-        play();
-        threadPool.shutdown(); // Don't play the game here; the players will handle their turns
-        System.out.println("Game.Game ended.");
-    }
-
-    @Override
     public void play() {
-        startGame();
-    }
-
-    private void startGame() {
         System.out.println("Beginning play...");
+        for (Player player : playerQueue.getQueue()) {
+            Thread thread = new Thread(player);
+            thread.start();
+        }
         while (playerQueue.size() > 1) {
             synchronized (lock) {
                 try {

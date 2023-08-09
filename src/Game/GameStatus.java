@@ -13,9 +13,13 @@ public class GameStatus {
     boolean gameFinished;
     int counter;
     PlayerQueue playerQueue;
+    private final Object playerQueueLock;
+    private final Object gameStatusLock;
 
     private GameStatus() {
         playerQueue = PlayerQueue.getInstance();
+        playerQueueLock = new Object();
+        gameStatusLock = new Object();
     }
 
     public static GameStatus getInstance() {
@@ -26,86 +30,97 @@ public class GameStatus {
     }
 
     public synchronized void playerTurn(Player currentPlayer) {
-        List<Card> playerHand = currentPlayer.getCardsInHand();
-        GameUtil.printHands();
-        playRound();
-        System.out.println("Player " + currentPlayer.getPlayerNumber() + " taking turn...");
-        try {
-            if (playerHand.isEmpty() ||
-                    (playerHand.size() == 1 && playerHand.get(0).isJoker())) {
-                return;
-            }
-            Player nextPlayer = playerQueue.getNextPlayer(); // Getting the next player
-            Card takenCard = nextPlayer.takeRandomCard(); // Taking a card from the next player
-            System.out.println("Player " + currentPlayer.getPlayerNumber() + " took " + takenCard + " from Player " + nextPlayer.getPlayerNumber());
-            boolean matched = false;
-            for (int i = 0; i < playerHand.size(); i++) {
-                if (takenCard.matches(playerHand.get(i))) {
-                    System.out.println("Player " + currentPlayer.getPlayerNumber() + " matched " + takenCard + " with " + playerHand.get(i) + " and discarded both");
-                    playerHand.remove(i);
-                    matched = true;
-                    break; // Exiting the loop as match found
+        synchronized (gameStatusLock) {
+            List<Card> playerHand = currentPlayer.getCardsInHand();
+            GameUtil.printHands();
+            playRound();
+            if (!playerHand.isEmpty()) {
+                Card takenCard = null;
+                Player nextPlayer = null;
+                try {
+                    nextPlayer = playerQueue.getNextPlayer();
+                    if (nextPlayer == currentPlayer) {
+                        return;
+                    }
+                    takenCard = nextPlayer.takeRandomCard();
+                    System.out.println("Player " + currentPlayer.getPlayerNumber() + " took " + takenCard + " from Player " + nextPlayer.getPlayerNumber());
+                    if (nextPlayer.getCardsInHand().isEmpty()) {
+                        playerQueue.removeCurrentPlayer();
+                         playerQueue.getNextPlayer();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                if (takenCard != null) {
+                    boolean matched = false;
+                    for (int i = 0; i < playerHand.size(); i++) {
+                        Card playerCard = playerHand.get(i);
+                        if (playerCard != null && takenCard.matches(playerCard)) {
+                            System.out.println("Player " + currentPlayer.getPlayerNumber() + " matched " + takenCard + " with " + playerCard + " and discarded both");
+                            playerHand.remove(i);
+                            matched = true;
+                            break;
+                        }
+                    }
+
+                    if (checkGameOver()) {
+                        gameFinished = true;
+                        return;
+                    }
+
+                    if (!matched) {
+                        playerHand.add(takenCard);
+                    }
                 }
             }
-            if (!matched) {
-                playerHand.add(takenCard); // Adding to hand if no match found
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
-        System.out.println("Player " + currentPlayer.getPlayerNumber() + " turn ended.");
     }
-
-    public boolean isStillInGame(Player player) {
-        return playerQueue.getQueue().contains(player);
-    }
-
 
     public synchronized void playRound() {
-        if (gameFinished) return;
-        System.out.println("***************************** ROUND " + ++counter + " SUMMARY *****************************");
-        int playerSize = playerQueue.size();
-        for (int i = 0; i < playerSize; i++) {
-            Player player = playerQueue.removeCurrentPlayer();
-            if (player.getCardsInHand().isEmpty()) {
-                System.out.println("Player " + player.getPlayerNumber() + " has discarded all their cards and is removed from the game!");
-                continue; // Skip players without cards
-            }
-            playerQueue.getQueue().add(player); // Add player back only if they still have cards
-            if (checkGameOver()) {
-                break; // Exit the loop if the game is over
+        synchronized (playerQueueLock) {
+            if (gameFinished) return;
+            System.out.println("***************************** ROUND " + ++counter + " SUMMARY *****************************");
+            int playerSize = playerQueue.size();
+            for (int i = 0; i < playerSize; i++) {
+                Player player = playerQueue.removeCurrentPlayer();
+                if (player.getCardsInHand().isEmpty()) {
+                    System.out.println("Player " + player.getPlayerNumber() + " has discarded all their cards and is removed from the game!");
+                    continue;
+                }
+                playerQueue.getQueue().add(player);
+                if (checkGameOver()) {
+                    break;
+                }
             }
         }
     }
 
     public synchronized boolean checkGameOver() {
-        System.out.println("Checking if game is over...");
+        synchronized (gameStatusLock) {
             if (gameFinished) {
-                System.out.println("Game already marked as finished.");
-                return false;
+                return true;
             }
             if (playerQueue.size() == 1) {
                 Player lastPlayer = playerQueue.getCurrentPlayer();
                 if (lastPlayer.getCardsInHand().size() == 1 && lastPlayer.getCardsInHand().get(0).isJoker()) {
-                    System.out.println("\n***************************** FINAL STATUS *****************************");
-                    System.out.println("Player " + lastPlayer.getPlayerNumber() + " has lost! They got left with a Joker! Game.Game finished! :)");
-                    System.out.println("------------------------------------------------------------------");
-                    endGame(); // Call the endGame method here
-                    System.out.println("Check game over ended.");
+                    System.out.println("Player " + lastPlayer.getPlayerNumber() + " has lost! They got left with a Joker! Game finished!");
+                    endGame();
                     return true;
                 }
             }
-            System.out.println("Check game over ended.");
             return false;
+        }
     }
 
-
     private synchronized void endGame() {
-        gameFinished = true;
-        for (Player player : playerQueue.getQueue()) {
-            player.setGameFinisher(true);
+        synchronized (playerQueueLock) {
+            gameFinished = true;
+            for (Player player : playerQueue.getQueue()) {
+                player.setGameFinisher(true);
+            }
+            playerQueue.notifyAllPlayers();
+            System.out.println("Game marked as finished.");
         }
-        playerQueue.notifyAllPlayers(); // Notify all waiting players
-        System.out.println("Game.Game marked as finished.");
     }
 }

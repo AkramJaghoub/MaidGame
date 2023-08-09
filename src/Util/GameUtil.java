@@ -4,11 +4,9 @@ import Cards.Card;
 import Cards.Deck;
 import Player.Player;
 import Player.PlayerQueue;
-
 import java.util.List;
 
 public class GameUtil {
-    // Private constructor to prevent instantiation
     private GameUtil() {}
 
     public synchronized static void dealCardsToPlayers() {
@@ -40,7 +38,7 @@ public class GameUtil {
         }
     }
 
-    private synchronized static void printPlayerCards(Player player) { // Made private, as it seems to be only used within this class
+    private synchronized static void printPlayerCards(Player player) {
         List<Card> playerHands = player.getCardsInHand();
         for (int i = 0; i < playerHands.size(); i++) {
             if (i > 0 && i % 4 == 0) {

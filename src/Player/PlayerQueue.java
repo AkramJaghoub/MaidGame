@@ -1,7 +1,6 @@
 package Player;
 
 import Exceptions.InvalidInputException;
-
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
@@ -9,12 +8,12 @@ import java.util.Scanner;
 public class PlayerQueue {
     private static PlayerQueue instance;
     private final Queue<Player> players;
-    private Player currentPlayer; // Variable to track the current player
-    private final Object lock; // Synchronization lock for player operations
+    private Player currentPlayer;
+    private final Object lock;
 
     private PlayerQueue(){
         players = new LinkedList<>();
-        lock = new Object(); // Initialize the lock
+        lock = new Object();
     }
 
     public static PlayerQueue getInstance(){
@@ -36,7 +35,7 @@ public class PlayerQueue {
                 throw new InvalidInputException("Maximum number of players is 8. Try again.");
             }
             for (int i = 1; i <= numberOfPlayers; i++) {
-                Player player = new Player(i, lock); // Pass the lock to each player
+                Player player = new Player(i, lock);
                 players.add(player);
             }
         } catch(InvalidInputException e){
@@ -61,11 +60,7 @@ public class PlayerQueue {
     }
 
     public synchronized Player removeCurrentPlayer() {
-        Player removedPlayer = null;
-        if (!players.isEmpty()) {
-            removedPlayer = players.remove();
-        }
-        return removedPlayer;
+        return players.poll();
     }
 
     public synchronized void setCurrentPlayer(Player player) {
@@ -78,7 +73,7 @@ public class PlayerQueue {
                 return player;
             }
         }
-        return null; // Return null if no matching player is found
+        return null;
     }
 
     public synchronized Player getCurrentPlayer() {
@@ -88,11 +83,12 @@ public class PlayerQueue {
 
     public synchronized Player getNextPlayer() {
         if (players.isEmpty()) {
-            return null; // Return null if the players queue is empty
+            return null;
         }
-        Player nextPlayer = players.remove();
-        players.add(nextPlayer);
-        setCurrentPlayer(nextPlayer); // Update the current player
+        Player currentPlayer = players.remove();
+        players.add(currentPlayer);
+        Player nextPlayer = players.peek();
+        setCurrentPlayer(nextPlayer);
         return nextPlayer;
     }
 
