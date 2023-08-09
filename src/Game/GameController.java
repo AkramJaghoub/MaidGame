@@ -3,28 +3,27 @@ package Game;
 import Cards.Card;
 import Player.Player;
 import Player.PlayerQueue;
-import Util.GameUtil;
-
+import Utility.GameUtil;
 import java.util.List;
 
-public class GameStatus {
+public class GameController {
 
-    private static GameStatus instance;
+    private static GameController instance;
     boolean gameFinished;
     int counter;
     PlayerQueue playerQueue;
     private final Object playerQueueLock;
     private final Object gameStatusLock;
 
-    private GameStatus() {
+    private GameController() {
         playerQueue = PlayerQueue.getInstance();
         playerQueueLock = new Object();
         gameStatusLock = new Object();
     }
 
-    public static GameStatus getInstance() {
+    public static GameController getInstance() {
         if (instance == null) {
-            instance = new GameStatus();
+            instance = new GameController();
         }
         return instance;
     }
@@ -46,6 +45,7 @@ public class GameStatus {
                     System.out.println("Player " + currentPlayer.getPlayerNumber() + " took " + takenCard + " from Player " + nextPlayer.getPlayerNumber());
                     if (nextPlayer.getCardsInHand().isEmpty()) {
                         playerQueue.removeCurrentPlayer();
+                        System.out.println("Player " + nextPlayer.getPlayerNumber() + " has discarded all their cards and is removed from the game!");
                          playerQueue.getNextPlayer();
                     }
                 } catch (InterruptedException e) {
@@ -73,24 +73,27 @@ public class GameStatus {
                         playerHand.add(takenCard);
                     }
                 }
+                if(currentPlayer.getCardsInHand().isEmpty()){
+                    Player player = playerQueue.removePlayerByNumber(currentPlayer.getPlayerNumber());
+                    System.out.println("Player " + player.getPlayerNumber() + " has discarded all their cards and is removed from the game!");
+                    playerQueue.getNextPlayer();
+                }
             }
         }
     }
 
     public synchronized void playRound() {
         synchronized (playerQueueLock) {
-            if (gameFinished) return;
             System.out.println("***************************** ROUND " + ++counter + " SUMMARY *****************************");
             int playerSize = playerQueue.size();
             for (int i = 0; i < playerSize; i++) {
                 Player player = playerQueue.removeCurrentPlayer();
                 if (player.getCardsInHand().isEmpty()) {
-                    System.out.println("Player " + player.getPlayerNumber() + " has discarded all their cards and is removed from the game!");
-                    continue;
+                    continue; //skip empty player card
                 }
-                playerQueue.getQueue().add(player);
+                playerQueue.getQueue().add(player); //only add to the queue when a player can play again
                 if (checkGameOver()) {
-                    break;
+                    return;
                 }
             }
         }
@@ -103,7 +106,7 @@ public class GameStatus {
             }
             if (playerQueue.size() == 1) {
                 Player lastPlayer = playerQueue.getCurrentPlayer();
-                if (lastPlayer.getCardsInHand().size() == 1 && lastPlayer.getCardsInHand().get(0).isJoker()) {
+                if (lastPlayer.getCardsInHand().size() == 1 && lastPlayer.getCardsInHand().get(0).isJoker()) { // if 1 card left and it is the JOKER
                     System.out.println("Player " + lastPlayer.getPlayerNumber() + " has lost! They got left with a Joker! Game finished!");
                     endGame();
                     return true;

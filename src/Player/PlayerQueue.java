@@ -1,6 +1,8 @@
 package Player;
 
 import Exceptions.InvalidInputException;
+
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Scanner;
@@ -74,6 +76,20 @@ public class PlayerQueue {
             }
         }
         return null;
+    }
+
+    public synchronized Player removePlayerByNumber(int playerNumber) {
+        Player removedPlayer = null;
+        Iterator<Player> iterator = players.iterator();
+        while (iterator.hasNext()) {
+            Player player = iterator.next();
+            if (player.getPlayerNumber() == playerNumber) {
+                iterator.remove();
+                removedPlayer = player;
+                break;
+            }
+        }
+        return removedPlayer;
     }
 
     public synchronized Player getCurrentPlayer() {

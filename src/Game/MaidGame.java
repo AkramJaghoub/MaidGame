@@ -3,7 +3,7 @@ package Game;
 import Cards.Deck;
 import Player.PlayerQueue;
 import Player.Player;
-import Util.GameUtil;
+import Utility.GameUtil;
 
 public class MaidGame extends Game {
     private final Object lock = new Object();
@@ -11,12 +11,12 @@ public class MaidGame extends Game {
     public MaidGame() {
         playerQueue = PlayerQueue.getInstance();
         deck = Deck.getInstance();
-        GameUtil.dealCardsToPlayers();
+        initializeGame();
     }
 
     @Override
     public void play() {
-        System.out.println("Beginning play...");
+        System.out.println("\nBeginning play...");
         for (Player player : playerQueue.getQueue()) {
             Thread thread = new Thread(player);
             thread.start();
@@ -25,7 +25,7 @@ public class MaidGame extends Game {
             synchronized (lock) {
                 try {
                     Thread.sleep(50);
-                    lock.notifyAll(); // Notify all waiting threads
+                    lock.notifyAll();
                 } catch (InterruptedException ex) {
                     ex.printStackTrace();
                 }

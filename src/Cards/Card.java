@@ -6,6 +6,7 @@ public class Card {
     private final Color color;
 
     public Card(String suit, String value, Color color) {
+
         this.suit = suit;
         this.value = value;
         this.color = color;

@@ -1,4 +1,4 @@
-package Util;
+package Utility;
 
 import Cards.Card;
 import Cards.Deck;

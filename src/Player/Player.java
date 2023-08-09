@@ -12,7 +12,7 @@ public class Player implements Runnable {
     private final ArrayList<Card> hand;
     private final Object lock;
     private boolean isGameFinished = false;
-    private final GameStatus gameStatus = GameStatus.getInstance();
+    private final GameController gameController;
 
     PlayerQueue playerQueue;
 
@@ -22,6 +22,7 @@ public class Player implements Runnable {
         this.playerNumber = playerNumber;
         playerQueue = PlayerQueue.getInstance();
         this.lock = lock;
+        gameController = GameController.getInstance();
     }
 
     public int getPlayerNumber() {
@@ -59,11 +60,12 @@ public class Player implements Runnable {
                 }
                 if (!hand.isEmpty()) {
                     Player currentPlayer = playerQueue.getCurrentPlayer();
-                    gameStatus.playerTurn(currentPlayer);
+                    gameController.playerTurn(currentPlayer);
                     lock.notifyAll();
                 }
-                if (gameStatus.checkGameOver()) {
-                    System.exit(0);
+                if (gameController.checkGameOver()) {
+                    lock.notifyAll();
+                    return;
                 }
             }
         }

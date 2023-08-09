@@ -7,7 +7,6 @@ public class GameDriver {
         PlayerQueue playerQueue = PlayerQueue.getInstance();
         playerQueue.initializeQueue();
         Game game = new MaidGame();
-        game.startWithPlayer(1);
         game.play();
     }
 }
