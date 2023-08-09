@@ -36,7 +36,7 @@ public class GameStatus {
             playRound();
             if (!playerHand.isEmpty()) {
                 Card takenCard = null;
-                Player nextPlayer = null;
+                Player nextPlayer;
                 try {
                     nextPlayer = playerQueue.getNextPlayer();
                     if (nextPlayer == currentPlayer) {
